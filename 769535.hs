@@ -58,8 +58,9 @@ addFilm title director year film = (title, director, year, []) : film
 filmsAsString :: [Film] -> String
 filmsAsString [] = ""
 filmsAsString ((title, director, year, fans):xs) = title ++ " by " ++ director ++
-                                                   ", released " ++  (show year)
-                                                   ++ ".\n" ++ filmsAsString xs
+                                                    ", released " ++  (show year)
+                                                    ++ ".\nThe fans for this film are: "
+                                                    ++ (show fans) ++ ".\n\n" ++ filmsAsString xs
 
 --3 give all the films that were released after a particular year (not including the given year)
 displayFilmsAfterYear :: Year -> [Film] -> String
@@ -72,7 +73,7 @@ checkFilm y (title, director, year, fans)
 
 --4 give all films that a particular user is a fan of
 filmsByFan :: String -> [Film] -> String
-filmsByFan fanName database = filmsAsStringFans(filter(isFan fanName) database)
+filmsByFan fanName database = filmsAsString(filter(isFan fanName) database)
 
 isFan :: String -> Film -> Bool
 isFan fanName (title, director, year, fans)
@@ -93,13 +94,6 @@ fansAsString :: Fans -> String
 fansAsString [] = ""
 fansAsString  (x:xs) = (show x) ++ fansAsString ++ xs
                                                     --}
-filmsAsStringFans :: [Film] -> String
-filmsAsStringFans [] = ""
-filmsAsStringFans  ((title, director, year, fans):xs) = title ++ " by " ++ director ++
-                                                    ", released " ++  (show year)
-                                                    ++ ".\nThe fans for this film are: "
-                                                    ++ (show fans) ++ ".\n\n" ++ filmsAsStringFans xs
-
 
 --6 allow a user to say they are a fan of a particular film
 addFan :: String -> Title -> [Film] -> [Film]
@@ -125,8 +119,8 @@ demo 4 = putStrLn(filmsByFan "Liz" testDatabase)
 --demo 5  = putStrLn all fans of "Jaws"
 --demo 6  = putStrLn all films after "Liz" says she becomes fan of "The Fly"
 --demo 66 = putStrLn all films after "Liz" says she becomes fan of "Avatar"
-demo 6 = putStrLn(filmsAsStringFans(addFan "Liz" "The Fly" testDatabase))
-demo 66 = putStrLn(filmsAsStringFans(addFan "Liz" "Avatar" testDatabase))
+demo 6 = putStrLn(filmsAsString(addFan "Liz" "The Fly" testDatabase))
+demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
 --demo 7 =  putStrLn all fans of films directed by "James Cameron"
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
 
