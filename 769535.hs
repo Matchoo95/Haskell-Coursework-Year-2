@@ -1,6 +1,4 @@
 import Data.List
-import System.IO
-import Control.Exception
 
 --
 -- MATHFUN
@@ -44,11 +42,26 @@ testDatabase = [
   ("Star Wars: The Force Awakens", "J J Abrams", 2015, ["Emma", "Wally", "Zoe", "Kate", "Bill", "Dave", "Liz", "Jo"]),
   ("Hugo", "Martin Scorsese", 2011, ["Wally", "Sam"])
   ]
-  --
-  --
-  --  Your functional code goes here
-  --
-  --
+
+--
+-- Helper Functions
+--
+
+-- checks if a film is above a certain year
+checkFilm :: Year -> Film -> Bool
+checkFilm y (title, director, year, fans)
+          | y < year = True
+          | otherwise = False
+
+-- checks if fans name is in a films fan list
+isFan :: String -> Film -> Bool
+isFan fanName (title, director, year, fans)
+          | elem fanName fans = True
+          | otherwise = False
+
+--
+--  Functional code
+--
 
 --1 add a new film to the database
 addFilm :: Title -> Director -> Year -> [Film] -> [Film]
@@ -66,34 +79,21 @@ filmsAsString ((title, director, year, fans):xs) = title ++ " by " ++ director +
 displayFilmsAfterYear :: Year -> [Film] -> String
 displayFilmsAfterYear year database = filmsAsString(filter(checkFilm year) database)
 
-checkFilm :: Year -> Film -> Bool
-checkFilm y (title, director, year, fans)
-          | y < year = True
-          | otherwise = False
-
 --4 give all films that a particular user is a fan of
 filmsByFan :: String -> [Film] -> String
 filmsByFan fanName database = filmsAsString(filter(isFan fanName) database)
 
-isFan :: String -> Film -> Bool
-isFan fanName (title, director, year, fans)
-          | elem fanName fans = True
-          | otherwise = False
-
 --5 give all the fans of a particular film
-{--
-fansOfFilm :: [Film] -> Fans -> String
-fansOfFilm filmName fans = fansAsString (filter(isFilm filmName) fans)
+-- TODO do this later
 
-isFilm :: Title -> Film -> Bool
-isFilm filmName (title, director, year, fans)
-          | filmName == title = True
-          | otherwise = False
 
-fansAsString :: Fans -> String
-fansAsString [] = ""
-fansAsString  (x:xs) = (show x) ++ fansAsString ++ xs
-                                                    --}
+allFans :: [Film] -> [String]
+allFans []     = []
+allFans [x] = getFans x
+allFans (x:xs) = getFans x ++ (allFans xs)
+
+getFans :: Film -> [String]
+getFans (title, director, year, fans) = fans
 
 --6 allow a user to say they are a fan of a particular film
 addFan :: String -> Title -> [Film] -> [Film]
@@ -102,6 +102,18 @@ addFan fan filmTitle ((title, director, year, fans) : xs)
           | (filmTitle == title) && not(isFan fan (title, director, year, fans))
               = (title, director, year, fan : fans) : addFan fan filmTitle xs
           | otherwise = (title, director, year, fans) : addFan fan filmTitle xs
+
+--7
+--sameDirector
+
+--getFilmsDirector
+
+
+
+
+
+
+
 
 -- Demo function to test basic functionality (without persistence - i.e.
 -- testDatabase doesn't change and nothing is saved/loaded to/from file).
@@ -117,6 +129,7 @@ demo 3 = putStrLn(displayFilmsAfterYear 2008 testDatabase)
 --demo 4  = putStrLn all films that "Liz" is a fan of
 demo 4 = putStrLn(filmsByFan "Liz" testDatabase)
 --demo 5  = putStrLn all fans of "Jaws"
+--demo 5 = putStrLn(fansOfFilm("Jaws", "Steven Spielberg", 1975, ["Dave", "Jo", "Zoe", "Wally", "Emma", "Kate"]) database)
 --demo 6  = putStrLn all films after "Liz" says she becomes fan of "The Fly"
 --demo 66 = putStrLn all films after "Liz" says she becomes fan of "Avatar"
 demo 6 = putStrLn(filmsAsString(addFan "Liz" "The Fly" testDatabase))
