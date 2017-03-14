@@ -1,5 +1,4 @@
 import Data.List
-import Text.Printf
 import System.IO
 import Control.Exception
 
@@ -45,8 +44,6 @@ testDatabase = [
   ("Star Wars: The Force Awakens", "J J Abrams", 2015, ["Emma", "Wally", "Zoe", "Kate", "Bill", "Dave", "Liz", "Jo"]),
   ("Hugo", "Martin Scorsese", 2011, ["Wally", "Sam"])
   ]
-
-
   --
   --
   --  Your functional code goes here
@@ -60,9 +57,9 @@ addFilm title director year film = (title, director, year, []) : film
 --2 give all films in the database
 filmsAsString :: [Film] -> String
 filmsAsString [] = ""
-filmsAsString  ((title, director, year, fans):xs) = title ++ " by " ++ director ++
-                                                    ", released " ++  (show year)
-                                                    ++ ".\n" ++ filmsAsString xs
+filmsAsString ((title, director, year, fans):xs) = title ++ " by " ++ director ++
+                                                   ", released " ++  (show year)
+                                                   ++ ".\n" ++ filmsAsString xs
 
 --3 give all the films that were released after a particular year (not including the given year)
 displayFilmsAfterYear :: Year -> [Film] -> String
@@ -116,9 +113,10 @@ addFan fan filmTitle ((title, director, year, fans) : xs)
 -- testDatabase doesn't change and nothing is saved/loaded to/from file).
 
 demo :: Int -> IO ()
-demo 1 = putStrLn(filmsAsString(addFilm "Alien: Covenant" "Ridley Scott" 2017 testDatabase))
 --demo 1  = putStrLn all films after adding 2017 film "Alien: Covenant"
 --                   by "Ridley Scott" to testDatabase
+demo 1 = putStrLn(filmsAsString(addFilm "Alien: Covenant" "Ridley Scott" 2017 testDatabase))
+--demo 2  = putStrLn (filmsAsString testDatabase)
 demo 2 = putStrLn(filmsAsString testDatabase)
 --demo 3  = putStrLn all films released after 2008
 demo 3 = putStrLn(displayFilmsAfterYear 2008 testDatabase)
