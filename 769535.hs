@@ -59,6 +59,11 @@ isFan fanName (Film title director year fans)
           | elem fanName fans = True
           | otherwise = False
 
+-- modified version of Q2 but for directors only
+directorsAsString :: [Film] -> String
+directorsAsString [] = ""
+directorsAsString ((Film _ director _ _):xs) = director ++ "\n" ++ directorsAsString xs
+
 --
 --  Functional code
 --
@@ -70,10 +75,7 @@ addFilm title director year database = (Film title director year []) : database
 --2 give all films in the database
 filmsAsString :: [Film] -> String
 filmsAsString [] = ""
-filmsAsString ((Film title director year fans):xs) = title ++ " by " ++ director ++
-                                                    ", released " ++  (show year)
-                                                    ++ ".\nThe fans for this film are: "
-                                                    ++ (show fans) ++ ".\n\n" ++ filmsAsString xs
+filmsAsString ((Film title director year fans):xs) = director ++ ".\n\n" ++ filmsAsString xs
 
 --3 give all the films that were released after a particular year (not including the given year)
 displayFilmsAfterYear :: Year -> [Film] -> String
@@ -84,27 +86,27 @@ filmsByFan :: String -> [Film] -> String
 filmsByFan fanName database = filmsAsString(filter(isFan fanName) database)
 
 --5 give all the fans of a particular film
-fansOfFilm :: Title -> [Film] -> [[String]]
-fansOfFilm name database = [fans|Film title director year fans <- database, name == title] 
+fansOfFilm :: Title -> [Film] -> String
+fansOfFilm filmName database = unlines(concat[fans|Film title director year fans 
+                            <- database, filmName == title])
 
 --6 allow a user to say they are a fan of a particular film
 addFan :: String -> Title -> [Film] -> [Film]
-addFan fan filmTitle [] = []
-addFan fan filmTitle ((Film title director year fans) : xs)
-          | (filmTitle == title) && not(isFan fan (Film title director year fans))
-              = (Film title director year fan : fans) : addFan fan filmTitle xs
-          | otherwise = (Film title director year fans) : addFan fan filmTitle xs
-          
+addFan fan filmName [] = []
+addFan fan filmName ((Film title director year fans) : xs)
+          | (filmName == title) && not(isFan fan (Film title director year fans))
+              = (Film title director year (fan : fans)) : addFan fan filmName xs
+          | otherwise = (Film title director year fans) : addFan fan filmName xs
 --7
---sameDirector
+-- lines splits string into list on every new line
+-- unlines does the opposite of lines
+-- concat joins subslists of a list together
+getFilmsByDirector :: Director -> [Film] -> String
+getFilmsByDirector directorName database = unlines(nub(concat(map(\(Film title _ _ _) -> lines (fansOfFilm title database))(filter(\(Film _ director _ _) -> directorName == director) database))))
 
---getFilmsDirector
-
-
-
-
-
-
+--8
+countFilmsByFanAsDirectors :: String -> [Film] -> String
+countFilmsByFanAsDirectors fanName database = zip(nub(map(\(Film _ _ _ fans) -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) -> fanName == fans) database)))
 
 
 -- Demo function to test basic functionality (without persistence - i.e.
@@ -121,11 +123,11 @@ demo 3 = putStrLn(displayFilmsAfterYear 2008 testDatabase)
 --demo 4  = putStrLn all films that "Liz" is a fan of
 demo 4 = putStrLn(filmsByFan "Liz" testDatabase)
 --demo 5  = putStrLn all fans of "Jaws"
---demo 5 = putStrLn(fansOfFilm("Jaws" testDatabase))
+demo 5 = putStrLn(fansOfFilm "Jaws" testDatabase)
 --demo 6  = putStrLn all films after "Liz" says she becomes fan of "The Fly"
 --demo 66 = putStrLn all films after "Liz" says she becomes fan of "Avatar"
---demo 6 = putStrLn(filmsAsString(addFan "Liz" "The Fly" testDatabase))
---demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
+demo 6 = putStrLn(filmsAsString(addFan "Liz" "The Fly" testDatabase))
+demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
 --demo 7 =  putStrLn all fans of films directed by "James Cameron"
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
 
