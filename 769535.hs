@@ -146,15 +146,32 @@ demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
 demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
 
+
 --
--- Your user interface code goes here
+-- UI helper functions
+--
+
+-- rebuilds film database for outputting
+buildFilm :: [[String]] -> [Film]
+buildFilm (x:[]) = (Film (x !! 0) (x !! 1) (read (x !! 2):: Int) (splitFans((x !! 3)))) : []
+buildFilm (x:xs) = (Film (x !! 0) (x !! 1) (read (x !! 2):: Int) (splitFans((x !! 3)))) : buildFilm xs
+
+splitFans :: String -> [String]
+splitFans fanList = splitOn "," ([x | x <- fanList, not(x `elem` " ")]) -- removes spaces and splits fans when ","
+
+--
+-- User Interface
 --
 main :: IO ()
 main = do
     contents <- readFile "films.txt"
     let fileLines = lines([x | x <- contents, not(x `elem` "\"")])
-    let splitContents = splitWhen (=="") fileLines
-    putStrLn (show splitContents)
+    let rebuiltContents = buildFilm(splitWhen (=="") fileLines)
+    putStrLn (filmsAsString(rebuiltContents))
+    putStrLn "Please enter your name: "
+    username <- getLine
+    valChoice rebuiltContents username
+    return ()
     
     {-
     let listWords = read contents :: [String]
@@ -162,8 +179,8 @@ main = do
     let listAsString = show newList
     writeFile "films.txt" (show listAsString)
     -}
-valChoice :: IO String
-valChoice = do
+valChoice :: [Film] -> String -> IO String
+valChoice film username = do
     putStrLn "What would you like to do? Type in the number for your option."
     putStrLn "1. Add a new film to the database."
     putStrLn "2. Give all films in the database."
@@ -186,7 +203,7 @@ valChoice = do
         "8" -> return "8"
         "9" -> return "9"
         _ -> do putStrLn "Please input just one number"
-                valChoice
+                valChoice film username
         {-
 chooseAction ::  [String] -> IO [String]
 chooseAction listWords = do
