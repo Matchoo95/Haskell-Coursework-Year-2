@@ -87,16 +87,24 @@ filmsByFan fanName database = filmsAsString(filter(isFan fanName) database)
 
 --5 give all the fans of a particular film
 fansOfFilm :: Title -> [Film] -> String
-fansOfFilm filmName database = unlines(concat[fans|Film title director year fans 
+fansOfFilm filmName database = unlines(concat[fans|Film title director year fans
                             <- database, filmName == title])
 
---6 allow a user to say they are a fan of a particular film
+--6 allow a user to say they are a fan of a particular film changes to maybe?
 addFan :: String -> Title -> [Film] -> [Film]
 addFan fan filmName [] = []
 addFan fan filmName ((Film title director year fans) : xs)
           | (filmName == title) && not(isFan fan (Film title director year fans))
               = (Film title director year (fan : fans)) : addFan fan filmName xs
           | otherwise = (Film title director year fans) : addFan fan filmName xs
+
+-- alternative
+addFans :: Film -> String -> Film
+addFans (Film t d y f) fan
+    | elem fan f    = Film t d y f
+    | otherwise     = Film t d y fans
+    where
+      fans = f ++ [fan]
 
 --7 give all the fans (without duplicates) of a particular director (i.e. those users who are
 -- fans of at least one of the director’s films)
