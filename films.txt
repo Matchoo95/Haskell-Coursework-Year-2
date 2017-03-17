@@ -1,29 +1,3 @@
-This file consists of film data that you should use to test your Haskell
-coursework program. There are 25 films in total.
-
-After you have worked out a suitable Film datatype for your Haskell program,
-you should include the test data from this file without any modifications or
-additions in your program as a list of type [Film]; i.e.:
-
-  testDatabase :: [Film]
-  testDatabase = [ ... the 25 Film values ... ]
-
-This test data should be used to demonstrate the correctness of your
-program in the in-class demonstration. Therefore, if you have managed
-to complete loading and saving of data, make sure that the test data
-without any modifications or additions is also stored in your database
-files at the beginning of the demonstration. Regardless of whether you
-have implemented a user interface or loading/saving, make sure that
-you also complete the demo function in your program.
-
-The film records include the following data:
-    title
-    director
-    year
-    fans
-
-
-
 "Blade Runner"
 "Ridley Scott"
 1982

@@ -8,11 +8,11 @@ import Data.List
 --
 -- Types
 --
-type Title = String
-type Director = String
-type Year = Int
-type Fans = [String]
-data Film = Film Title Director Year Fans
+data Film = Film { fTitle :: String
+                 , fDirector :: String
+                 , fYear :: Int
+                 , fFans ::[String]
+                 } deriving (Eq, Show, Ord, Read)
 
 testDatabase :: [Film]
 testDatabase = [
@@ -48,15 +48,15 @@ testDatabase = [
 --
 
 -- checks if a film is above a certain year
-checkFilm :: Year -> Film -> Bool
-checkFilm y (Film title director year fans)
-          | y < year = True
+checkFilm :: Int -> Film -> Bool
+checkFilm y film
+          | y < fYear film = True
           | otherwise = False
 
 -- checks if fans name is in a films fan list
 isFan :: String -> Film -> Bool
-isFan fanName (Film title director year fans)
-          | elem fanName fans = True
+isFan fanName film
+          | elem fanName (fFans film) = True
           | otherwise = False
 
 -- modified version of Q2 but for directors only
@@ -69,16 +69,24 @@ directorsAsString ((Film _ director _ _):xs) = director ++ "\n" ++ directorsAsSt
 --
 
 --1 add a new film to the database
-addFilm :: Title -> Director -> Year -> [Film] -> [Film]
+addFilm :: String -> String -> Int -> [Film] -> [Film]
 addFilm title director year database = (Film title director year []) : database
 
---2 give all films in the database
+--2 give all films in the database 
+-- try and output fans as a string format instead of a list
 filmsAsString :: [Film] -> String
 filmsAsString [] = ""
-filmsAsString ((Film title director year fans):xs) = director ++ ".\n\n" ++ filmsAsString xs
+filmsAsString  ((Film title director year fans):xs) = title ++ " by " ++ director ++
+                                                        ", released " ++  (show year)
+                                                        ++ ".\nThe number of fans for this film is: "
+                                                        ++ (show (length fans)) ++ ".\n\n" 
+                                                        ++ filmsAsString xs
+--filmsAsStringFans :: [Film] -> String
+--filmsAsStringFans [] = ""
+--filmsAsStringFans ((Film title director year fans):xs) = director ++ ".\n\n" ++ filmsAsStringFans xs
 
 --3 give all the films that were released after a particular year (not including the given year)
-displayFilmsAfterYear :: Year -> [Film] -> String
+displayFilmsAfterYear :: Int -> [Film] -> String
 displayFilmsAfterYear year database = filmsAsString(filter(checkFilm year) database)
 
 --4 give all films that a particular user is a fan of
@@ -86,38 +94,32 @@ filmsByFan :: String -> [Film] -> String
 filmsByFan fanName database = filmsAsString(filter(isFan fanName) database)
 
 --5 give all the fans of a particular film
-fansOfFilm :: Title -> [Film] -> String
+fansOfFilm :: String -> [Film] -> String
 fansOfFilm filmName database = unlines(concat[fans|Film title director year fans
                             <- database, filmName == title])
 
 --6 allow a user to say they are a fan of a particular film changes to maybe?
-addFan :: String -> Title -> [Film] -> [Film]
-addFan fan filmName [] = []
-addFan fan filmName ((Film title director year fans) : xs)
-          | (filmName == title) && not(isFan fan (Film title director year fans))
-              = (Film title director year (fan : fans)) : addFan fan filmName xs
-          | otherwise = (Film title director year fans) : addFan fan filmName xs
+addFan :: String -> String -> [Film] -> [Film]
+addFan fanName filmName database = map(\(Film title director year fans) -> 
+                                if(title == filmName) then 
+                                (Film title director year (fans++[fanName])) 
+                                else (Film title director year fans)) database
 
--- alternative
-addFans :: Film -> String -> Film
-addFans (Film t d y f) fan
-    | elem fan f    = Film t d y f
-    | otherwise     = Film t d y fans
-    where
-      fans = f ++ [fan]
 
 --7 give all the fans (without duplicates) of a particular director (i.e. those users who are
 -- fans of at least one of the director’s films)
 -- lines splits string into list on every new line
 -- unlines does the opposite of lines
 -- concat joins subslists of a list together
-getFansByDirector :: Director -> [Film] -> String
+getFansByDirector :: String -> [Film] -> String
 getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ _ _) -> lines (fansOfFilm title database))(filter(\(Film _ director _ _) -> directorName == director) database))))
 
 --8 list all directors (without duplicates), giving for each one the number of his/her films
 -- a particular user is a fan of
 --countFilmsByFanAsDirectors :: String -> [Film] -> String
---countFilmsByFanAsDirectors fanName database = nub(map(\(Film _ _ _ fans) -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) -> fanName == fans) database))
+--countFilmsByFanAsDirectors fanName database = nub(map(\(Film _ director _ _)
+                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) 
+                                            -> fanName == fans) database))
 
 
 -- Demo function to test basic functionality (without persistence - i.e.
@@ -144,7 +146,6 @@ demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
 
 --
---
 -- Your user interface code goes here
 --
---
+
