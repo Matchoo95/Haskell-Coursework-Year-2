@@ -97,16 +97,19 @@ addFan fan filmName ((Film title director year fans) : xs)
           | (filmName == title) && not(isFan fan (Film title director year fans))
               = (Film title director year (fan : fans)) : addFan fan filmName xs
           | otherwise = (Film title director year fans) : addFan fan filmName xs
---7
+
+--7 give all the fans (without duplicates) of a particular director (i.e. those users who are
+-- fans of at least one of the director’s films)
 -- lines splits string into list on every new line
 -- unlines does the opposite of lines
 -- concat joins subslists of a list together
-getFilmsByDirector :: Director -> [Film] -> String
-getFilmsByDirector directorName database = unlines(nub(concat(map(\(Film title _ _ _) -> lines (fansOfFilm title database))(filter(\(Film _ director _ _) -> directorName == director) database))))
+getFansByDirector :: Director -> [Film] -> String
+getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ _ _) -> lines (fansOfFilm title database))(filter(\(Film _ director _ _) -> directorName == director) database))))
 
---8
-countFilmsByFanAsDirectors :: String -> [Film] -> String
-countFilmsByFanAsDirectors fanName database = zip(nub(map(\(Film _ _ _ fans) -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) -> fanName == fans) database)))
+--8 list all directors (without duplicates), giving for each one the number of his/her films
+-- a particular user is a fan of
+--countFilmsByFanAsDirectors :: String -> [Film] -> String
+--countFilmsByFanAsDirectors fanName database = nub(map(\(Film _ _ _ fans) -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) -> fanName == fans) database))
 
 
 -- Demo function to test basic functionality (without persistence - i.e.
@@ -129,6 +132,7 @@ demo 5 = putStrLn(fansOfFilm "Jaws" testDatabase)
 demo 6 = putStrLn(filmsAsString(addFan "Liz" "The Fly" testDatabase))
 demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
 --demo 7 =  putStrLn all fans of films directed by "James Cameron"
+demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
 
 --
