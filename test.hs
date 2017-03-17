@@ -97,3 +97,5 @@ split ((x,y):xs) = (x:(fst result), y:(snd result))
 
 split2 :: [(a,b)] -> ([a],[b])
 split2 list = ([x | (x,y) <- list], [y | (x,y) <- list])
+
+addFilms fanName filmName database = map(\(Film title director year fans) -> if(title == filmName) then (Film title director year fans++(fanName))) else (Film title director year fans))
