@@ -1,4 +1,5 @@
 import Data.List
+import Data.List.Split
 
 --
 -- MATHFUN
@@ -102,15 +103,15 @@ fansOfFilm filmName database = unlines(concat[fans|Film title director year fans
 addFan :: String -> String -> [Film] -> [Film]
 addFan fanName filmName database = map(\(Film title director year fans) -> 
                                 if(title == filmName) then 
-                                (Film title director year (fans++[fanName])) 
+                                (Film title director year (nub((fans++[fanName]))))
                                 else (Film title director year fans)) database
-
 
 --7 give all the fans (without duplicates) of a particular director (i.e. those users who are
 -- fans of at least one of the director’s films)
 -- lines splits string into list on every new line
 -- unlines does the opposite of lines
 -- concat joins subslists of a list together
+-- nub removes duplicates
 getFansByDirector :: String -> [Film] -> String
 getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ _ _) -> lines (fansOfFilm title database))(filter(\(Film _ director _ _) -> directorName == director) database))))
 
@@ -118,8 +119,8 @@ getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ 
 -- a particular user is a fan of
 --countFilmsByFanAsDirectors :: String -> [Film] -> String
 --countFilmsByFanAsDirectors fanName database = nub(map(\(Film _ director _ _)
-                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) 
-                                            -> fanName == fans) database))
+--                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) 
+--                                            -> fanName == fans) database))
 
 
 -- Demo function to test basic functionality (without persistence - i.e.
@@ -148,4 +149,69 @@ demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
 --
 -- Your user interface code goes here
 --
+main :: IO ()
+main = do
+    contents <- readFile "films.txt"
+    let fileLines = lines([x | x <- contents, not(x `elem` "\"")])
+    let splitContents = splitWhen (=="") fileLines
+    putStrLn (show splitContents)
+    
+    {-
+    let listWords = read contents :: [String]
+    newList <- chooseAction listWords
+    let listAsString = show newList
+    writeFile "films.txt" (show listAsString)
+    -}
+valChoice :: IO String
+valChoice = do
+    putStrLn "What would you like to do? Type in the number for your option."
+    putStrLn "1. Add a new film to the database."
+    putStrLn "2. Give all films in the database."
+    putStrLn "3. Give all the films that were released after a particular year."
+    putStrLn "4. Find all the films you are a fan of."
+    putStrLn "5. Give all the fans of a particular film."
+    putStrLn "6. Add yourself as a fan to a film."
+    putStrLn "7. Give all the fans of a particular director."
+    putStrLn "8. List all directors, giving for each, one number of their films that you are a fan of."
+    putStrLn "9. Exit"
+    line <- getLine
+    case line of
+        "1" -> return "1"
+        "2" -> return "2"
+        "3" -> return "3"
+        "4" -> return "4"
+        "5" -> return "5"
+        "6" -> return "6"
+        "7" -> return "7"
+        "8" -> return "8"
+        "9" -> return "9"
+        _ -> do putStrLn "Please input just one number"
+                valChoice
+        {-
+chooseAction ::  [String] -> IO [String]
+chooseAction listWords = do
+    choice <- valChoice
+    if choice == "1" then do
+        putStrLn "Type the word you want to add: "
+        word <- getLine
+        let newList = addWord word listWords
+        chooseAction newList
+    else if choice == "2" then do
+        print listWords
+        chooseAction listWords
+    else if choice == "3" then do
+        putStrLn "Type a length: "
+        length <- getInt
+        print (wordsOfLength length listWords)
+        chooseAction listWords
+    else
+        return listWords
+    -}
+    
+    
+    
+
+
+
+
 
