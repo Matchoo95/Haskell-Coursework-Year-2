@@ -73,14 +73,14 @@ directorsAsString ((Film _ director _ _):xs) = director ++ "\n" ++ directorsAsSt
 addFilm :: String -> String -> Int -> [Film] -> [Film]
 addFilm title director year database = (Film title director year []) : database
 
---2 give all films in the database 
+--2 give all films in the database
 -- try and output fans as a string format instead of a list
 filmsAsString :: [Film] -> String
 filmsAsString [] = ""
 filmsAsString  ((Film title director year fans):xs) = title ++ " by " ++ director ++
                                                         ", released " ++  (show year)
                                                         ++ ".\nThe number of fans for this film is: "
-                                                        ++ (show (length fans)) ++ ".\n\n" 
+                                                        ++ (show (length fans)) ++ ".\n\n"
                                                         ++ filmsAsString xs
 --filmsAsStringFans :: [Film] -> String
 --filmsAsStringFans [] = ""
@@ -101,8 +101,8 @@ fansOfFilm filmName database = unlines(concat[fans|Film title director year fans
 
 --6 allow a user to say they are a fan of a particular film changes to maybe?
 addFan :: String -> String -> [Film] -> [Film]
-addFan fanName filmName database = map(\(Film title director year fans) -> 
-                                if(title == filmName) then 
+addFan fanName filmName database = map(\(Film title director year fans) ->
+                                if(title == filmName) then
                                 (Film title director year (nub((fans++[fanName]))))
                                 else (Film title director year fans)) database
 
@@ -113,13 +113,15 @@ addFan fanName filmName database = map(\(Film title director year fans) ->
 -- concat joins subslists of a list together
 -- nub removes duplicates
 getFansByDirector :: String -> [Film] -> String
-getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ _ _) -> lines (fansOfFilm title database))(filter(\(Film _ director _ _) -> directorName == director) database))))
+getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ _ _)
+                                        -> lines (fansOfFilm title database))(filter(\(Film _ director _ _)
+                                        -> directorName == director) database))))
 
 --8 list all directors (without duplicates), giving for each one the number of his/her films
 -- a particular user is a fan of
 --countFilmsByFanAsDirectors :: String -> [Film] -> String
 --countFilmsByFanAsDirectors fanName database = nub(map(\(Film _ director _ _)
---                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans) 
+--                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans)
 --                                            -> fanName == fans) database))
 
 
@@ -159,6 +161,10 @@ buildFilm (x:xs) = (Film (x !! 0) (x !! 1) (read (x !! 2):: Int) (splitFans((x !
 splitFans :: String -> [String]
 splitFans fanList = splitOn "," ([x | x <- fanList, not(x `elem` " ")]) -- removes spaces and splits fans when ","
 
+-- check if name entered
+checkUser :: String -> IO ()
+checkUser username
+
 --
 -- User Interface
 --
@@ -168,11 +174,11 @@ main = do
     let fileLines = lines([x | x <- contents, not(x `elem` "\"")])
     let rebuiltContents = buildFilm(splitWhen (=="") fileLines)
     putStrLn (filmsAsString(rebuiltContents))
-    putStrLn "Please enter your name: "
+    putStrLn "\nPlease enter your name: "
     username <- getLine
     valChoice rebuiltContents username
     return ()
-    
+
     {-
     let listWords = read contents :: [String]
     newList <- chooseAction listWords
@@ -224,11 +230,3 @@ chooseAction listWords = do
     else
         return listWords
     -}
-    
-    
-    
-
-
-
-
-
