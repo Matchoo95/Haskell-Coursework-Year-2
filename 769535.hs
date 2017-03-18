@@ -1,5 +1,6 @@
 import Data.List
 import Data.List.Split
+import Data.Char
 
 --
 -- MATHFUN
@@ -65,6 +66,12 @@ directorsAsString :: [Film] -> String
 directorsAsString [] = ""
 directorsAsString ((Film _ director _ _):xs) = director ++ "\n" ++ directorsAsString xs
 
+-- modified version again but for fans
+filmsAsStringFans :: [String] -> String
+filmsAsStringFans [] = ""
+filmsAsStringFans (x:xs) = x ++ ", " ++ (filmsAsStringFans xs)
+
+
 --
 --  Functional code
 --
@@ -74,7 +81,6 @@ addFilm :: String -> String -> Int -> [Film] -> [Film]
 addFilm title director year database = (Film title director year []) : database
 
 --2 give all films in the database
--- try and output fans as a string format instead of a list
 filmsAsString :: [Film] -> String
 filmsAsString [] = ""
 filmsAsString  ((Film title director year fans):xs) = title ++ " by " ++ director ++
@@ -82,9 +88,6 @@ filmsAsString  ((Film title director year fans):xs) = title ++ " by " ++ directo
                                                         ++ ".\nThe number of fans for this film is: "
                                                         ++ (show (length fans)) ++ ".\n\n"
                                                         ++ filmsAsString xs
---filmsAsStringFans :: [Film] -> String
---filmsAsStringFans [] = ""
---filmsAsStringFans ((Film title director year fans):xs) = director ++ ".\n\n" ++ filmsAsStringFans xs
 
 --3 give all the films that were released after a particular year (not including the given year)
 displayFilmsAfterYear :: Int -> [Film] -> String
@@ -99,7 +102,7 @@ fansOfFilm :: String -> [Film] -> String
 fansOfFilm filmName database = unlines(concat[fans|Film title director year fans
                             <- database, filmName == title])
 
---6 allow a user to say they are a fan of a particular film changes to maybe?
+--6 allow a user to say they are a fan of a particular film
 addFan :: String -> String -> [Film] -> [Film]
 addFan fanName filmName database = map(\(Film title director year fans) ->
                                 if(title == filmName) then
@@ -125,6 +128,203 @@ getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ 
 --                                            -> fanName == fans) database))
 
 
+--
+-- UI helper functions
+--
+
+-- rebuilds film database for outputting
+buildFilm :: [[String]] -> [Film]
+buildFilm (x:[]) = (Film (x !! 0) (x !! 1) (read (x !! 2):: Int) (splitFans((x !! 3)))) : []
+buildFilm (x:xs) = (Film (x !! 0) (x !! 1) (read (x !! 2):: Int) (splitFans((x !! 3)))) : buildFilm xs
+
+-- splits up fans into a seperate sub list
+splitFans :: String -> [String]
+splitFans fanList = splitOn "," ([x | x <- fanList, not(x `elem` " ")]) -- removes spaces and splits fans when ","
+
+-- check if numbers are in string
+checkIfNo :: String -> Bool
+checkIfNo = any isDigit
+
+-- check if numbers are in string
+checkIfString :: String -> Bool
+checkIfString = any isLetter
+
+-- check if a director exists          
+directorExist :: String -> [Film] -> Bool
+directorExist fDirector [] = False
+directorExist fDirector (x:xs)
+        | fDirector == getDirector x = True
+directorExist director (x:xs) = directorExist director xs
+-- get a director
+getDirector :: Film -> String
+getDirector (Film _ director _ _) = director
+
+-- check if a film exists
+filmExist :: String -> [Film] -> Bool
+filmExist fTitle [] = False
+filmExist fTitle (x:xs)
+        | fTitle == getFilm x = True
+filmExist fTitle (x:xs) = filmExist fTitle xs
+-- get a film
+getFilm :: Film -> String
+getFilm (Film title _ _ _) = title
+
+--
+-- User Interface
+--
+
+
+main :: IO ()
+main = do
+    contents <- readFile "films.txt"
+    let fileLines = lines([x | x <- contents, not(x `elem` "\"")])
+    let rebuiltContents = buildFilm(splitWhen (=="") fileLines)
+    putStrLn (filmsAsString(rebuiltContents))
+    putStrLn "\nPlease enter your name: "
+    username <- getLine
+    valChoice rebuiltContents username
+    return ()    
+
+valChoice :: [Film] -> String -> IO ()
+valChoice films username = do
+    putStrLn "What would you like to do? Type in the number for your choice."
+    putStrLn "1. Add a new film to the database."
+    putStrLn "2. Give all films in the database."
+    putStrLn "3. Give all the films that were released after a particular year."
+    putStrLn "4. Find all the films you are a fan of."
+    putStrLn "5. Give all the fans of a particular film."
+    putStrLn "6. Add yourself as a fan to a film."
+    putStrLn "7. Give all the fans of a particular director."
+    putStrLn "8. List all directors, giving for each, one number of their films that you are a fan of."
+    putStrLn "9. Exit"
+    line <- getLine
+    case line of
+        "1" -> choice1 films username
+        "2" -> choice2 films username
+        "3" -> choice3 films username
+        "4" -> choice4 films username
+        "5" -> choice5 films username
+        "6" -> choice6 films username
+        "7" -> choice7 films username
+--        "8" -> choice8 films username
+        "9" -> do
+                writeToFilms films
+                return ()
+        _ -> do putStrLn "Please input just one number"
+                valChoice films username
+        
+--1 add a new film to the database
+choice1 :: [Film] -> String -> IO ()
+choice1 films username = do
+  putStr "Enter Title: "
+  title <- getLine
+  let exists = filmExist title films
+  if (exists == True || title == "") then do
+      putStrLn "This film exists."
+      choice1 films username
+    else do
+      if (title == "") then do
+          putStrLn "Invalid input"
+          choice1 films username
+        else do
+            putStrLn "Enter a Director: "
+            director <- getLine
+            let isNumber = checkIfNo director
+            if (isNumber == True) then do
+                putStrLn "A director cannot have a number in their name."
+                choice1 films username
+              else do
+                putStrLn "Enter a Year: "
+                year <- getLine
+                let isString = checkIfString year
+                let yr = read year :: Int
+                if ((isString == True) || (yr >= 2018)) then do
+                    putStrLn "Please enter the correct year of release in digits."
+                    choice1 films username
+                  else do
+                    putStrLn "Film successfully added to the database."
+                    let database = addFilm "Alien: Covenant" "Ridley Scott" 2017 testDatabase
+                    valChoice database username
+
+--2 give all films in the database
+choice2 :: [Film] -> String -> IO ()
+choice2 films username = do 
+    putStrLn "Do you want to view all films? y/n?"
+    choice <- getLine
+    case choice of
+        "y" -> do putStrLn(filmsAsString testDatabase)
+        _ -> do
+            valChoice films username
+
+--3 give all the films that were released after a particular year (not including the given year)
+choice3 :: [Film] -> String -> IO ()
+choice3 films username = do
+  putStr "Enter a year: "
+  year <- getLine
+  let yr = read year :: Int
+  let isString = checkIfString year
+  if ((isString == True) || (yr >= 2018)) then do      
+    putStrLn "Please enter a correct year in digits."
+    choice3 films username
+    else do
+        putStrLn(displayFilmsAfterYear yr testDatabase)
+        valChoice films username
+
+--4 give all films that a particular user is a fan of
+choice4 :: [Film] -> String -> IO ()
+choice4 films username = do
+  putStrLn(filmsByFan username testDatabase)
+  valChoice films username
+
+
+--5 give all the fans of a particular film
+choice5 :: [Film] -> String -> IO ()
+choice5 films username = do
+  putStr "Enter film title: "
+  title <- getLine
+  let exists = filmExist title films
+  if ((not exists == True) || (title == "")) then do
+    putStrLn "This doesn't film exist."
+    valChoice films username
+    else do
+        putStrLn(fansOfFilm title testDatabase)
+        valChoice films username
+
+
+--6 allow a user to say they are a fan of a particular film
+choice6 :: [Film] -> String -> IO ()
+choice6 films username = do
+  putStrLn "Enter a film title to add yourself as a fan to: "
+  title <- getLine
+  let exists = filmExist title films
+  if (exists == True)
+    then do
+      let database = addFan username title testDatabase
+      valChoice database username
+    else do
+      putStrLn "Sorry this film doesn't exist."
+      choice6 films username
+
+--7 give all the fans (without duplicates) of a particular director (i.e. those users who are
+-- fans of at least one of the director’s films)
+choice7 :: [Film] -> String -> IO ()
+choice7 films username = do
+  putStrLn "Enter a director's name: "
+  director <- getLine
+  putStrLn(getFansByDirector director testDatabase)
+  valChoice films username
+
+--choice8
+  
+-- save back to the files.txt file
+writeToFilms :: [Film] -> IO ()
+writeToFilms films = do
+  putStrLn "Saving changes..."
+  writeFile "films.txt" ""
+  writeFile "films.txt" (show films)
+  putStrLn "Done"
+  return ()
+  
 -- Demo function to test basic functionality (without persistence - i.e.
 -- testDatabase doesn't change and nothing is saved/loaded to/from file).
 
@@ -148,85 +348,3 @@ demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
 demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
 
-
---
--- UI helper functions
---
-
--- rebuilds film database for outputting
-buildFilm :: [[String]] -> [Film]
-buildFilm (x:[]) = (Film (x !! 0) (x !! 1) (read (x !! 2):: Int) (splitFans((x !! 3)))) : []
-buildFilm (x:xs) = (Film (x !! 0) (x !! 1) (read (x !! 2):: Int) (splitFans((x !! 3)))) : buildFilm xs
-
-splitFans :: String -> [String]
-splitFans fanList = splitOn "," ([x | x <- fanList, not(x `elem` " ")]) -- removes spaces and splits fans when ","
-
--- check if name entered
-checkUser :: String -> IO ()
-checkUser username
-
---
--- User Interface
---
-main :: IO ()
-main = do
-    contents <- readFile "films.txt"
-    let fileLines = lines([x | x <- contents, not(x `elem` "\"")])
-    let rebuiltContents = buildFilm(splitWhen (=="") fileLines)
-    putStrLn (filmsAsString(rebuiltContents))
-    putStrLn "\nPlease enter your name: "
-    username <- getLine
-    valChoice rebuiltContents username
-    return ()
-
-    {-
-    let listWords = read contents :: [String]
-    newList <- chooseAction listWords
-    let listAsString = show newList
-    writeFile "films.txt" (show listAsString)
-    -}
-valChoice :: [Film] -> String -> IO String
-valChoice film username = do
-    putStrLn "What would you like to do? Type in the number for your option."
-    putStrLn "1. Add a new film to the database."
-    putStrLn "2. Give all films in the database."
-    putStrLn "3. Give all the films that were released after a particular year."
-    putStrLn "4. Find all the films you are a fan of."
-    putStrLn "5. Give all the fans of a particular film."
-    putStrLn "6. Add yourself as a fan to a film."
-    putStrLn "7. Give all the fans of a particular director."
-    putStrLn "8. List all directors, giving for each, one number of their films that you are a fan of."
-    putStrLn "9. Exit"
-    line <- getLine
-    case line of
-        "1" -> return "1"
-        "2" -> return "2"
-        "3" -> return "3"
-        "4" -> return "4"
-        "5" -> return "5"
-        "6" -> return "6"
-        "7" -> return "7"
-        "8" -> return "8"
-        "9" -> return "9"
-        _ -> do putStrLn "Please input just one number"
-                valChoice film username
-        {-
-chooseAction ::  [String] -> IO [String]
-chooseAction listWords = do
-    choice <- valChoice
-    if choice == "1" then do
-        putStrLn "Type the word you want to add: "
-        word <- getLine
-        let newList = addWord word listWords
-        chooseAction newList
-    else if choice == "2" then do
-        print listWords
-        chooseAction listWords
-    else if choice == "3" then do
-        putStrLn "Type a length: "
-        length <- getInt
-        print (wordsOfLength length listWords)
-        chooseAction listWords
-    else
-        return listWords
-    -}
