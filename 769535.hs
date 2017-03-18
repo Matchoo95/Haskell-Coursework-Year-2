@@ -10,11 +10,12 @@ import Data.Char
 --
 -- Types
 --
-data Film = Film { fTitle :: String
-                 , fDirector :: String
-                 , fYear :: Int
-                 , fFans ::[String]
-                 } deriving (Eq, Show, Ord, Read)
+type Title = String
+type Director = String
+type Year = Int
+type Fans = [String]
+data Film = Film Title Director Year Fans
+        deriving (Eq, Show, Ord, Read)
 
 testDatabase :: [Film]
 testDatabase = [
@@ -50,28 +51,17 @@ testDatabase = [
 --
 
 -- checks if a film is above a certain year
-checkFilm :: Int -> Film -> Bool
-checkFilm y film
-          | y < fYear film = True
+checkFilm :: Year -> Film -> Bool
+checkFilm y (Film title director year fans)
+          | y < year = True
           | otherwise = False
 
 -- checks if fans name is in a films fan list
 isFan :: String -> Film -> Bool
-isFan fanName film
-          | elem fanName (fFans film) = True
+isFan fanName (Film title director year fans)
+          | elem fanName fans = True
           | otherwise = False
-
--- modified version of Q2 but for directors only
-directorsAsString :: [Film] -> String
-directorsAsString [] = ""
-directorsAsString ((Film _ director _ _):xs) = director ++ "\n" ++ directorsAsString xs
-
--- modified version again but for fans
-filmsAsStringFans :: [String] -> String
-filmsAsStringFans [] = ""
-filmsAsStringFans (x:xs) = x ++ ", " ++ (filmsAsStringFans xs)
-
-
+          
 --
 --  Functional code
 --
@@ -122,10 +112,12 @@ getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ 
 
 --8 list all directors (without duplicates), giving for each one the number of his/her films
 -- a particular user is a fan of
---countFilmsByFanAsDirectors :: String -> [Film] -> String
---countFilmsByFanAsDirectors fanName database = nub(map(\(Film _ director _ _)
---                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans)
---                                            -> fanName == fans) database))
+{-
+countFilmsByFanAsDirectors :: String -> [Film] -> String
+countFilmsByFanAsDirectors fanName database = unlines(nub(map(\(Film _ director _ _)
+                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans)
+                                            -> fanName == fans) database))
+-}
 
 
 --
@@ -169,11 +161,10 @@ filmExist fTitle (x:xs) = filmExist fTitle xs
 getFilm :: Film -> String
 getFilm (Film title _ _ _) = title
 
+
 --
 -- User Interface
 --
-
-
 main :: IO ()
 main = do
     contents <- readFile "films.txt"
@@ -206,7 +197,8 @@ valChoice films username = do
         "5" -> choice5 films username
         "6" -> choice6 films username
         "7" -> choice7 films username
---        "8" -> choice8 films username
+        "8" -> do putStrLn "Sorry, this option is unavailable at this time.\n" 
+                  valChoice films username
         "9" -> do
                 writeToFilms films
                 return ()
@@ -290,7 +282,6 @@ choice5 films username = do
         putStrLn(fansOfFilm title testDatabase)
         valChoice films username
 
-
 --6 allow a user to say they are a fan of a particular film
 choice6 :: [Film] -> String -> IO ()
 choice6 films username = do
@@ -313,21 +304,17 @@ choice7 films username = do
   director <- getLine
   putStrLn(getFansByDirector director testDatabase)
   valChoice films username
-
---choice8
   
 -- save back to the files.txt file
 writeToFilms :: [Film] -> IO ()
 writeToFilms films = do
   putStrLn "Saving changes..."
-  writeFile "films.txt" ""
   writeFile "films.txt" (show films)
   putStrLn "Done"
   return ()
   
 -- Demo function to test basic functionality (without persistence - i.e.
 -- testDatabase doesn't change and nothing is saved/loaded to/from file).
-
 demo :: Int -> IO ()
 --demo 1  = putStrLn all films after adding 2017 film "Alien: Covenant"
 --                   by "Ridley Scott" to testDatabase
@@ -347,4 +334,3 @@ demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
 --demo 7 =  putStrLn all fans of films directed by "James Cameron"
 demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
-
