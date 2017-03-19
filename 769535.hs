@@ -45,15 +45,24 @@ testDatabase = [
 
 -- checks if a film is above a certain year
 checkFilm :: Int -> Film -> Bool
-checkFilm y (Film title director year fans)
+checkFilm y (Film _ _ year _)
           | y < year  = True
           | otherwise = False
 
 -- checks if fans name is in a films fan list
 isFan :: String -> Film -> Bool
-isFan fanName (Film title director year fans)
+isFan fanName (Film _ _ _ fans)
           | elem fanName fans = True
           | otherwise = False
+          
+-- get all directors
+allDirectors :: [Film] -> [String]
+allDirectors database = nub([director | (Film _ director _ _) <- database])
+
+-- gets films based on a director
+filmsByDirector :: String ->[Film] -> [Film]
+filmsByDirector directorName database = filter (\(Film _ director _ _) -> director == directorName) database
+
           
 --
 --  Functional code
@@ -82,7 +91,7 @@ filmsByFan fanName database = filmsAsString(filter(isFan fanName) database)
 
 --5 give all the fans of a particular film
 fansOfFilm :: String -> [Film] -> String
-fansOfFilm filmName database = unlines(concat[fans|Film title director year fans
+fansOfFilm filmName database = unlines(concat[fans|Film title _ _ fans
                             <- database, filmName == title])
 
 --6 allow a user to say they are a fan of a particular film
@@ -105,13 +114,12 @@ getFansByDirector directorName database = unlines(nub(concat(map(\(Film title _ 
 
 --8 list all directors (without duplicates), giving for each one the number of his/her films
 -- a particular user is a fan of
-{-
-countFilmsByFanAsDirectors :: String -> [Film] -> String
-countFilmsByFanAsDirectors fanName database = unlines(nub(map(\(Film _ director _ _)
-                                            -> count(filmsByFan fans) database)(filter(\(Film _ _ _ fans)
-                                            -> fanName == fans) database))
--}
-
+countFilmsByFanAsDirectors :: String -> [String] -> [Film] -> String
+countFilmsByFanAsDirectors _ [] _ = ""
+countFilmsByFanAsDirectors fanName (x:xs) database = "\n" ++ x ++ ": " 
+                                                   ++ (show(length(filter(isFan fanName)
+                                                   (filmsByDirector x database)))) 
+                                                   ++ (countFilmsByFanAsDirectors fanName xs database)
 
 --
 -- UI helper functions
@@ -124,22 +132,12 @@ checkIfNo = any isDigit
 checkIfString :: String -> Bool
 checkIfString = any isLetter
 
--- check if a director exists          
-directorExist :: String -> [Film] -> Bool
-directorExist directorName [] = False
-directorExist directorName (x:xs)
-        | directorName == getDirector x = True
-directorExist director (x:xs) = directorExist director xs
--- get a director
-getDirector :: Film -> String
-getDirector (Film _ director _ _) = director
-
 -- check if a film exists
 filmExist :: String -> [Film] -> Bool
-filmExist filmName [] = False
-filmExist filmName (x:xs)
-        | filmName == getFilm x = True
-filmExist title (x:xs) = filmExist title xs
+filmExist filmName database
+    | (filter (\(Film title _ _ _) -> title == filmName) database) == [] = False
+    | otherwise = True
+
 -- get a film
 getFilm :: Film -> String
 getFilm (Film title _ _ _) = title
@@ -190,8 +188,7 @@ menu database username = do
         "5" -> choice5 database username
         "6" -> choice6 database username
         "7" -> choice7 database username
-        "8" -> do putStrLn "Sorry, this option is unavailable at this time.\n" 
-                  menu database username
+        "8" -> choice8 database username
         "9" -> do
                 writeToDatabase database
                 return ()
@@ -203,8 +200,7 @@ choice1 :: [Film] -> String -> IO ()
 choice1 database username = do
     putStr "Enter Title: "
     title <- getLine
-    let exists = filmExist title database
-    if (exists == True || title == "") then do
+    if ((filmExist title database) == True || title == "") then do
         putStrLn "This film exists."
         choice1 database username
     else do
@@ -214,16 +210,14 @@ choice1 database username = do
         else do
             putStrLn "Enter a Director: "
             director <- getLine
-            let isNumber = checkIfNo director
-            if (isNumber == True) then do
-                putStrLn "A director cannot have a number in their name."
+            if ((checkIfNo director) == True || title == "") then do
+                putStrLn "Please enter a valid director name."
                 choice1 database username
-              else do
+            else do            
                 putStrLn "Enter a Year: "
                 year <- getLine
-                let isString = checkIfString year
                 let yr = read year :: Int
-                if ((isString == True) || (yr >= 2018)) then do
+                if (((checkIfString year) == True) || (yr >= 2018)) then do
                     putStrLn "Please enter the correct year of release in digits."
                     choice1 database username
                   else do
@@ -247,8 +241,7 @@ choice3 database username = do
     putStr "Enter a year: "
     year <- getLine
     let yr = read year :: Int
-    let isString = checkIfString year
-    if ((isString == True) || (yr >= 2018)) then do      
+    if (((checkIfString year) == True) || (yr >= 2018)) then do      
         putStrLn "Please enter a correct year in digits."
         choice3 database username
     else do
@@ -270,8 +263,7 @@ choice5 :: [Film] -> String -> IO ()
 choice5 database username = do
     putStr "Enter film title: "
     title <- getLine
-    let exists = filmExist title database
-    if ((not exists == True) || (title == "")) then do
+    if (((filmExist title database) == (False)) || (title == "")) then do
         putStrLn "This doesn't film exist."
         menu database username
     else do
@@ -283,9 +275,9 @@ choice6 :: [Film] -> String -> IO ()
 choice6 database username = do
     putStrLn "Enter a film title to add yourself as a fan to: "
     title <- getLine
-    let exists = filmExist title database
-    if (exists == True)
+    if ((filmExist title database) == True)
     then do
+        putStrLn "You have been added as a fan!"
         let newDatabase = addFan username title database
         menu newDatabase username
     else do
@@ -305,7 +297,13 @@ choice7 database username = do
         putStrLn(getFansByDirector director database)
         menu database username
  
-  
+--8 list all directors (without duplicates), giving for each one the number of his/her films
+-- a particular user is a fan of
+choice8 :: [Film] -> String -> IO ()
+choice8 database username = do
+    putStrLn(countFilmsByFanAsDirectors username (allDirectors database) database)
+    menu database username
+    
 -- Demo function to test basic functionality (without persistence - i.e.
 -- testDatabase doesn't change and nothing is saved/loaded to/from file).
 demo :: Int -> IO ()
@@ -327,3 +325,4 @@ demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
 --demo 7 =  putStrLn all fans of films directed by "James Cameron"
 demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
 --demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
+demo 8  = putStrLn(countFilmsByFanAsDirectors "Liz" (allDirectors testDatabase) testDatabase)
