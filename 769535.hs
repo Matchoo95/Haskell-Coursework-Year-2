@@ -59,7 +59,6 @@ isFan fanName (Film _ _ _ fans)
           | elem fanName fans = True
           | otherwise = False
           
-          
 -- Gets all directors from a film database.
 -- Takes a film database.
 -- Outputs a list of directors (without duplicates).
@@ -73,7 +72,6 @@ filmsByDirector :: String -> [Film] -> [Film]
 filmsByDirector directorName database = filter(\(Film _ director _ _) 
                                         -> director == directorName) database
 
-          
 --
 --  Functional code
 --
@@ -92,7 +90,7 @@ filmsAsString :: [Film] -> String
 filmsAsString [] = ""
 filmsAsString ((Film title director year fans):xs) = title ++ " by " ++ director ++
                                                     ", released " ++  (show year)
-                                                    ++ ".\nThe number of fans for this film is: "
+                                                    ++ ".\nNumber of Fans: "
                                                     ++ (show (length fans)) ++ ".\n\n"
                                                     ++ filmsAsString xs
 
@@ -189,7 +187,7 @@ main = do
 -- Takes a film database and a username.
 menu :: [Film] -> String -> IO ()
 menu database username = do
-    putStrLn "What would you like to do? Type in the number for your choice.\n"
+    putStrLn "\nWhat would you like to do? Type in the number for your choice.\n"
     putStrLn "1. Add a new film to the database."
     putStrLn "2. Give all films in the database."
     putStrLn "3. Give all the films that were released after a particular year."
@@ -212,36 +210,36 @@ menu database username = do
         "9" -> do
                 writeToDatabase database
                 return ()
-        _ -> do putStrLn "Please input just one number"
+        _ -> do putStrLn "\nPlease input just one number.\n"
                 menu database username
         
 --1 Adds a new film to the database.
 choice1 :: [Film] -> String -> IO ()
 choice1 database username = do
-    putStr "Enter Title: "
+    putStr "\nEnter Title: "
     title <- getLine
     if ((filmExist title database) == True || title == "") then do
-        putStrLn "This film exists."
+        putStrLn "\nThis already film exists.\n"
         choice1 database username
     else do
         if (title == "") then do
-            putStrLn "Invalid input"
+            putStrLn "\nInvalid input.\n"
             choice1 database username
         else do
-            putStrLn "Enter a Director: "
+            putStrLn "\nEnter a Director: "
             director <- getLine
             if ((any isDigit director) == True || title == "") then do
-                putStrLn "Please enter a valid director name."
+                putStrLn "\nPlease enter a valid director name.\n"
                 choice1 database username
             else do            
-                putStrLn "Enter a Year: "
+                putStrLn "\nEnter a Year: "
                 year <- getLine
                 let yr = read year :: Int
                 if (((any isLetter year) == True) || (yr >= 2018)) then do
-                    putStrLn "Please enter the correct year of release in digits."
+                    putStrLn "\nPlease enter the correct year of release in digits.\n"
                     choice1 database username
                   else do
-                    putStrLn "Film successfully added to the database."
+                    putStrLn "\nFilm successfully added to the database.\n"
                     let newDatabase = addFilm title director yr database
                     menu newDatabase username
 
@@ -249,7 +247,7 @@ choice1 database username = do
 choice2 :: [Film] -> String -> IO ()
 choice2 database username = do 
     if ((filmsAsString database) == []) then do
-        putStrLn "There are no films in the database."
+        putStrLn "\nThere are no films in the database.\n"
         menu database username
     else do        
         putStrLn(filmsAsString database)
@@ -258,11 +256,11 @@ choice2 database username = do
 --3 Gives all the films that were released after a particular year (not including the given year)
 choice3 :: [Film] -> String -> IO ()
 choice3 database username = do
-    putStr "Enter a year: "
+    putStr "\nEnter a year: "
     year <- getLine
     let yr = read year :: Int
     if (((any isLetter year) == True) || (yr >= 2018)) then do      
-        putStrLn "Please enter a correct year in digits."
+        putStrLn "\nPlease enter a correct year in digits.\n"
         choice3 database username
     else do
         putStrLn(displayFilmsAfterYear yr database)
@@ -272,7 +270,7 @@ choice3 database username = do
 choice4 :: [Film] -> String -> IO ()
 choice4 database username = do
     if ((filmsByFan username database) == []) then do
-        putStrLn "You are not fans of any film.\n"
+        putStrLn "\nYou are not fans of any film.\n"
         menu database username
     else do
         putStrLn(filmsByFan username database)
@@ -281,10 +279,10 @@ choice4 database username = do
 --5 Gives all the fans of a particular film
 choice5 :: [Film] -> String -> IO ()
 choice5 database username = do
-    putStr "Enter film title: "
+    putStr "\nEnter film title: "
     title <- getLine
     if (((filmExist title database) == (False)) || (title == "")) then do
-        putStrLn "This doesn't film exist."
+        putStrLn "This doesn't film exist.\n"
         menu database username
     else do
         putStrLn(fansOfFilm title database)
@@ -293,25 +291,25 @@ choice5 database username = do
 --6 Allows a user to say they are a fan of a particular film
 choice6 :: [Film] -> String -> IO ()
 choice6 database username = do
-    putStrLn "Enter a film title to add yourself as a fan to: "
+    putStrLn "\nEnter a film title to add yourself as a fan to: "
     title <- getLine
     if ((filmExist title database) == True)
     then do
-        putStrLn "You have been added as a fan!"
+        putStrLn "\nYou have been added as a fan!\n"
         let newDatabase = addFan username title database
         menu newDatabase username
     else do
-        putStrLn "Sorry this film doesn't exist."
+        putStrLn "\nSorry this film doesn't exist.\n"
         choice6 database username
 
 --7 Gives all the fans (without duplicates) of a particular director (i.e. those users who are
 -- fans of at least one of the director’s films)
 choice7 :: [Film] -> String -> IO ()
 choice7 database username = do
-    putStrLn "Enter a director's name: "
+    putStrLn "\nEnter a director's name: "
     director <- getLine
     if ((getFansByDirector director database) == []) then do
-        putStrLn "Sorry, there are either no fans for director, or the director does not exist."
+        putStrLn "\nSorry, there are either no fans for director, or the director does not exist.\n"
         menu database username
     else do
         putStrLn(getFansByDirector director database)
@@ -327,22 +325,12 @@ choice8 database username = do
 -- Demo function to test basic functionality (without persistence - i.e.
 -- testDatabase doesn't change and nothing is saved/loaded to/from file).
 demo :: Int -> IO ()
---demo 1  = putStrLn all films after adding 2017 film "Alien: Covenant"
---                   by "Ridley Scott" to testDatabase
 demo 1 = putStrLn(filmsAsString(addFilm "Alien: Covenant" "Ridley Scott" 2017 testDatabase))
---demo 2  = putStrLn (filmsAsString testDatabase)
 demo 2 = putStrLn(filmsAsString testDatabase)
---demo 3  = putStrLn all films released after 2008
 demo 3 = putStrLn(displayFilmsAfterYear 2008 testDatabase)
---demo 4  = putStrLn all films that "Liz" is a fan of
 demo 4 = putStrLn(filmsByFan "Liz" testDatabase)
---demo 5  = putStrLn all fans of "Jaws"
 demo 5 = putStrLn(fansOfFilm "Jaws" testDatabase)
---demo 6  = putStrLn all films after "Liz" says she becomes fan of "The Fly"
---demo 66 = putStrLn all films after "Liz" says she becomes fan of "Avatar"
 demo 6 = putStrLn(filmsAsString(addFan "Liz" "The Fly" testDatabase))
 demo 66 = putStrLn(filmsAsString(addFan "Liz" "Avatar" testDatabase))
---demo 7 =  putStrLn all fans of films directed by "James Cameron"
-demo 7 =  putStrLn(getFansByDirector "Ridley Scott" testDatabase)
---demo 8  = putStrLn all directors & no. of their films that "Liz" is a fan of
+demo 7 =  putStrLn(getFansByDirector "James Cameron" testDatabase)
 demo 8  = putStrLn(countFilmsByFanAsDirectors "Liz" (allDirectors testDatabase) testDatabase)
