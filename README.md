@@ -1,4 +1,4 @@
-# Haskell Film Database Program - Year 2 Coursework
+# Haskell Film Database Program - Discrete Maths and Functional Programming Year 2 Coursework
 # Coursework Outline
 
 Your task is to write a program in Haskell for a film ratings website that lets users add films, say which films they like, and display the details of various films. The site maintains a “database” (a textfile) of many films; each record of which gives a film’s title, the director, the year of release, and a list of users of the website who are fans of the film. 
